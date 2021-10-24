@@ -76,7 +76,7 @@ fun PokemonListScreen(
 }
 
 
-// TODO Not working yet
+// TODO - Call Api for searched item
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,

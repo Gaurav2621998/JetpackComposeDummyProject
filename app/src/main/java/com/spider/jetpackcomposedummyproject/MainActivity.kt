@@ -45,7 +45,7 @@ fun MyApp() {
                 PokemonListScreen(navController = navController)
         }
 
-        // TODO not yet done
+        // TODO - Create pokemon detail screen
         composable(
             "pokemon_detail_screen/{dominantColor}/{pokemonName}",
             arguments = listOf(
