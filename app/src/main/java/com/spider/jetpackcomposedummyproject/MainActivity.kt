@@ -7,15 +7,18 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navArgument
 import androidx.navigation.compose.rememberNavController
+import com.spider.jetpackcomposedummyproject.ui.screens.PokemonDetailScreen
 import com.spider.jetpackcomposedummyproject.ui.screens.PokemonListScreen
 import com.spider.jetpackcomposedummyproject.ui.theme.JetpackComposeDummyProjectTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.*
 
 
 @AndroidEntryPoint
@@ -45,7 +48,6 @@ fun MyApp() {
                 PokemonListScreen(navController = navController)
         }
 
-        // TODO - Create pokemon detail screen
         composable(
             "pokemon_detail_screen/{dominantColor}/{pokemonName}",
             arguments = listOf(
@@ -64,6 +66,11 @@ fun MyApp() {
             val pokemonName = remember {
                 it.arguments?.getString("pokemonName")
             }
+
+            PokemonDetailScreen(
+                dominantColor = dominantColor,
+                pokemonName = pokemonName?.lowercase(Locale.ROOT) ?: "",
+                navController = navController)
         }
     }
 }

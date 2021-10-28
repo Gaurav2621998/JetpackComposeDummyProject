@@ -11,14 +11,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
@@ -36,18 +33,22 @@ import coil.ImageLoader
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import coil.transform.GrayscaleTransformation
 import com.spider.jetpackcomposedummyproject.R
+import com.spider.jetpackcomposedummyproject.helper.ErrorTypes
 import com.spider.jetpackcomposedummyproject.model.Pokemon
 import com.spider.jetpackcomposedummyproject.ui.theme.RobotoCondensed
+import com.spider.jetpackcomposedummyproject.util.ConnectionState
+import com.spider.jetpackcomposedummyproject.util.currentConnectivityState
 import com.spider.jetpackcomposedummyproject.viewmodel.PokemonViewModel
 import kotlinx.coroutines.launch
 
 @ExperimentalFoundationApi
 @Composable
 fun PokemonListScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: PokemonViewModel = hiltViewModel()
 ) {
+
     Surface(
         color = MaterialTheme.colors.background,
         modifier = Modifier.fillMaxSize()
@@ -67,16 +68,16 @@ fun PokemonListScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-
+                viewModel.searchPokemonList(it)
             }
             Spacer(modifier = Modifier.height(16.dp))
             PokemonList(navController = navController)
+            // TODO - Add Network check observer, show network status UI
         }
     }
 }
 
 
-// TODO - Call Api for searched item
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
@@ -107,7 +108,7 @@ fun SearchBar(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
                 .onFocusChanged {
                     // hide hint when Textfield active
-                    isHintDisplayed = !it.isFocused
+                    isHintDisplayed = !it.isFocused && text.isEmpty()
                 }
         )
 
@@ -132,6 +133,8 @@ fun PokemonList(
     val endReached by remember { viewModel.endReached }
     val loadError by remember { viewModel.loadError }
     val isLoading by remember { viewModel.isLoading }
+    val isSearching by remember { viewModel.isSearching }
+
 
     // using grid view
     LazyVerticalGrid(
@@ -140,13 +143,12 @@ fun PokemonList(
         contentPadding = PaddingValues(16.dp)
     ) {
         items(pokemonList.size) {
-            if (!endReached) {
+            if (!endReached && !isLoading && !isSearching) {
                 viewModel.loadPokemonPaginated()
             }
             PokemonCard(entry = pokemonList[it], navController = navController)
         }
     }
-
 
 
     Box(
@@ -159,9 +161,18 @@ fun PokemonList(
         }
 
         // showing retry option when error occur
-        if (loadError.isNotEmpty()) {
-            RetrySection(error = loadError) {
-                viewModel.loadPokemonPaginated()
+        loadError.message?.let { message->
+            when(loadError.type){
+                ErrorTypes.NETWORK_ERROR -> {
+                    RetrySection(error = LocalContext.current.getString(R.string.no_internet_message)) {
+                        viewModel.loadPokemonPaginated()
+                    }
+                }
+                ErrorTypes.UNKNOWN_ERROR -> {
+                    RetrySection(error = message) {
+                        viewModel.loadPokemonPaginated()
+                    }
+                }
             }
         }
     }
@@ -215,7 +226,7 @@ fun PokemonCard(
                 LaunchedEffect(key1 = imagePainter) {
                     launch {
                         val result = imageLoader.execute(imageRequest)
-                        if(result is SuccessResult) {
+                        if (result is SuccessResult) {
                             viewModel.calcDominantColor(result.drawable) { color ->
                                 dominantColor = color
                             }
@@ -224,7 +235,7 @@ fun PokemonCard(
                 }
 
                 val painter =
-                    rememberImagePainter(data =entry.imageUrl)
+                    rememberImagePainter(data = entry.imageUrl)
                 Image(
                     painter = painter,
                     contentDescription = entry.pokemonName,

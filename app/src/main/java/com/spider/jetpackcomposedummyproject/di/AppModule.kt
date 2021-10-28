@@ -1,13 +1,23 @@
 package com.spider.jetpackcomposedummyproject.di
 
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalContext
 import com.spider.jetpackcomposedummyproject.api.RetrofitApis
 import com.spider.jetpackcomposedummyproject.model.PokemonResponseList
 import com.spider.jetpackcomposedummyproject.repository.PokemonRepository
+import com.spider.jetpackcomposedummyproject.util.ConnectionState
 //import com.spider.jetpackcomposedummyproject.repository.PokemonRepository
 import com.spider.jetpackcomposedummyproject.util.Constants
+import com.spider.jetpackcomposedummyproject.util.currentConnectivityState
+import com.spider.jetpackcomposedummyproject.util.observeConnectivityAsFlow
+import com.spider.jetpackcomposedummyproject.viewmodel.PokemonViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -32,5 +42,10 @@ class AppModule {
             .create(RetrofitApis::class.java)
     }
 
+    @Singleton
+    @Provides
+    fun getPokemonListViewModel(@ApplicationContext context:Context,pokemonRepository: PokemonRepository) = PokemonViewModel(
+        context,pokemonRepository
+    )
 
 }

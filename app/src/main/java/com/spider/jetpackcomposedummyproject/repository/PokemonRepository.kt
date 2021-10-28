@@ -1,6 +1,7 @@
 package com.spider.jetpackcomposedummyproject.repository
 
 import com.spider.jetpackcomposedummyproject.api.RetrofitApis
+import com.spider.jetpackcomposedummyproject.model.PokemonInfo
 import com.spider.jetpackcomposedummyproject.model.PokemonResponseList
 import com.spider.jetpackcomposedummyproject.util.Resource
 import dagger.hilt.android.scopes.ActivityScoped
@@ -15,6 +16,15 @@ class PokemonRepository @Inject constructor(
     suspend fun getPokemonList(limit:Int,offset:Int):Resource<PokemonResponseList>{
         val response = try {
             api.getPokemonList(limit,offset)
+        }catch (e:Exception){
+            return Resource.Error("An unknown error occured.")
+        }
+        return Resource.Success(response)
+    }
+
+    suspend fun getPokemonInfo(pokemonName:String):Resource<PokemonInfo>{
+        val response = try {
+            api.getPokemonInfo(pokemonName)
         }catch (e:Exception){
             return Resource.Error("An unknown error occured.")
         }
