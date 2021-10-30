@@ -6,6 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
 import com.spider.jetpackcomposedummyproject.api.RetrofitApis
+import com.spider.jetpackcomposedummyproject.db.LocalDatabase
 import com.spider.jetpackcomposedummyproject.model.PokemonResponseList
 import com.spider.jetpackcomposedummyproject.repository.PokemonRepository
 import com.spider.jetpackcomposedummyproject.util.ConnectionState
@@ -44,8 +45,14 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun getPokemonListViewModel(@ApplicationContext context:Context,pokemonRepository: PokemonRepository) = PokemonViewModel(
-        context,pokemonRepository
+    fun getPokemonListViewModel(@ApplicationContext context:Context,database: LocalDatabase,pokemonRepository: PokemonRepository) = PokemonViewModel(
+        context,database =database, pokemonRepository
     )
+
+    @Singleton
+    @Provides
+    fun getRoomDatabase(
+        @ApplicationContext context: Context
+    ) = LocalDatabase.getInstance(context)
 
 }

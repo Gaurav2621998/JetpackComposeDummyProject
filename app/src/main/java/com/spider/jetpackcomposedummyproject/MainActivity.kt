@@ -3,37 +3,49 @@ package com.spider.jetpackcomposedummyproject
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navArgument
 import androidx.navigation.compose.rememberNavController
+import androidx.paging.ExperimentalPagingApi
 import com.spider.jetpackcomposedummyproject.ui.screens.PokemonDetailScreen
 import com.spider.jetpackcomposedummyproject.ui.screens.PokemonListScreen
 import com.spider.jetpackcomposedummyproject.ui.theme.JetpackComposeDummyProjectTheme
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import java.util.*
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @ExperimentalAnimationApi
+    @ExperimentalPagingApi
     @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            JetpackComposeDummyProjectTheme {
-                MyApp()
+
+        try {
+            setContent {
+                JetpackComposeDummyProjectTheme {
+                    MyApp()
+                }
             }
+        }
+        catch (e:Exception){
+            Timber.d("exception "+e.message)
         }
     }
 }
 
+@ExperimentalAnimationApi
+@ExperimentalPagingApi
 @ExperimentalFoundationApi
 @Composable
 fun MyApp() {
@@ -75,6 +87,8 @@ fun MyApp() {
     }
 }
 
+@ExperimentalAnimationApi
+@ExperimentalPagingApi
 @ExperimentalFoundationApi
 @Preview(showBackground = true)
 @Composable

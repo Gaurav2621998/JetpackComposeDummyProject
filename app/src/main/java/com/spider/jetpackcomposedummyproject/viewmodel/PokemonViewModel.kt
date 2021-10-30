@@ -5,21 +5,32 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.CompositionContext
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.palette.graphics.Palette
+import com.spider.jetpackcomposedummyproject.db.LocalDatabase
 import com.spider.jetpackcomposedummyproject.helper.ErrorTypes
 import com.spider.jetpackcomposedummyproject.model.ErrorMessage
 import com.spider.jetpackcomposedummyproject.model.Pokemon
+import com.spider.jetpackcomposedummyproject.remote.PokemonPagingSource
+import com.spider.jetpackcomposedummyproject.remote.PokemonRemoteMediator
 import com.spider.jetpackcomposedummyproject.repository.PokemonRepository
 import com.spider.jetpackcomposedummyproject.util.*
 import com.spider.jetpackcomposedummyproject.util.Constants.PAGE_SIZE
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,55 +38,47 @@ import javax.inject.Inject
 @HiltViewModel
 class PokemonViewModel @Inject constructor(
     private val context: Context,
+    private val database: LocalDatabase,
     private val repository: PokemonRepository
 ) : ViewModel() {
 
     private var curPage = 0
 
-    var pokemonList = mutableStateOf<List<Pokemon>>(listOf())
+    var pokemonList:LiveData<List<Pokemon>>
+    var searchPokemonList = mutableStateOf<List<Pokemon>>(listOf())
     var loadError = mutableStateOf(ErrorMessage(ErrorTypes.UNKNOWN_ERROR))
     var isLoading = mutableStateOf(false)
     var endReached = mutableStateOf(false)
 
+    var searchQuery = ""
 
-    private var cachedPokemonList = listOf<Pokemon>()
+
     private var isSearchStarting = true
     var isSearching = mutableStateOf(false)
 
-
     init {
+        pokemonList = database.pokemonDao().getAllPokemonList()
         loadPokemonPaginated()
     }
 
-    fun searchPokemonList(query: String){
 
+    // TODO - Need Improvement
+    fun searchPokemonList(query: String){
+        searchQuery = query
         if(context.currentConnectivityState==ConnectionState.Unavailable){
             loadError.value = ErrorMessage(ErrorTypes.NETWORK_ERROR,"")
             return
         }
-
-        val listToSearch = if(isSearchStarting){
-            pokemonList.value
-        }
-        else{
-            cachedPokemonList
-        }
-
         viewModelScope.launch {
             if(query.isEmpty()){
-                pokemonList.value = cachedPokemonList
                 isSearching.value = false
                 isSearchStarting = true
                 return@launch
             }
-            val results = listToSearch.filter {
-                it.pokemonName.contains(query.trim(),ignoreCase = true)
-            }
+            searchPokemonList.value = database.pokemonDao().getSearchPokemon(query)
             if(isSearchStarting){
-                cachedPokemonList = pokemonList.value
                 isSearchStarting = false
             }
-            pokemonList.value = results
             isSearching.value = true
         }
     }
@@ -84,6 +87,9 @@ class PokemonViewModel @Inject constructor(
         if(context.currentConnectivityState==ConnectionState.Unavailable){
             loadError.value = ErrorMessage(ErrorTypes.NETWORK_ERROR,"")
             return
+        }
+        if(curPage==0){
+            database.pokemonDao().deleteAll()
         }
         // TODO - Change it to paging 3
         viewModelScope.launch {
@@ -105,7 +111,7 @@ class PokemonViewModel @Inject constructor(
 
                     loadError.value = ErrorMessage(ErrorTypes.UNKNOWN_ERROR)
                     isLoading.value = false
-                    pokemonList.value += pokemonEntries
+                    database.pokemonDao().insertAll(pokemonEntries)
                 }
                 is Resource.Error -> {
                     loadError.value = ErrorMessage(ErrorTypes.UNKNOWN_ERROR,result.message)
@@ -125,4 +131,19 @@ class PokemonViewModel @Inject constructor(
             }
         }
     }
+
+//    @ExperimentalPagingApi
+//    val pager = Pager (
+//        config = PagingConfig(20),
+//        remoteMediator = PokemonRemoteMediator(
+//            database,
+//            repository
+//        )
+//    ){
+//        database.pokemonDao().getPokemonList()
+//    }.flow
+//
+//    val pokemonPagingList: Flow<PagingData<Pokemon>> = Pager(PagingConfig(pageSize = 5)) {
+//        PokemonPagingSource(repository)
+//    }.flow
 }

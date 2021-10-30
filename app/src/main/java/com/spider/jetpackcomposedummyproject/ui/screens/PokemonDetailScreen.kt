@@ -50,7 +50,6 @@ fun PokemonDetailScreen(
         value = viewModel.getPokemonInfo(pokemonName)
     }.value
 
-
     Box(modifier = Modifier
         .fillMaxSize()
         .background(dominantColor)
@@ -81,7 +80,7 @@ fun PokemonDetailScreen(
                 .padding(16.dp)
                 .align(Alignment.BottomCenter),
             loadingModifier = Modifier
-                .size(50.dp)
+                .size(100.dp)
                 .align(Alignment.Center)
                 .padding(
                     top = topPadding + pokemonImageSize / 2f,
@@ -137,7 +136,7 @@ fun PokemonDetailTopSection(
         Icon(
             imageVector = Icons.Default.ArrowBack,
             contentDescription = null,
-            tint = Color.White,
+            tint = MaterialTheme.colors.onBackground,
             modifier = Modifier
                 .size(36.dp)
                 .offset(16.dp, 16.dp)
@@ -196,7 +195,7 @@ fun PokemonDetailSection(
         Text(
             text = "#${pokemonInfo.id} ${pokemonInfo.name.capitalize(Locale.ROOT)}",
             fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
+            fontSize = 20.sp,
             textAlign = TextAlign.Center,
             color = Color.Red
         )
@@ -282,11 +281,11 @@ fun PokemonDetailDataItem(
         verticalArrangement = Arrangement.Center,
         modifier = modifier
     ) {
-        Icon(painter = dataIcon, contentDescription = null, tint = MaterialTheme.colors.onSurface)
+        Icon(painter = dataIcon, contentDescription = null, tint = MaterialTheme.colors.onBackground)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "$dataValue$dataUnit",
-            color = MaterialTheme.colors.onSurface
+            color = MaterialTheme.colors.onBackground
         )
     }
 }

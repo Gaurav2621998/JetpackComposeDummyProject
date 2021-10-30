@@ -3,6 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Office/AndroidProject/JetpackComposeDummyProject/app/src/main/res/drawable/ic_connectivity_available.xml" value="0.1537037037037037" />
+        <entry key="..\:/Office/AndroidProject/JetpackComposeDummyProject/app/src/main/res/drawable/ic_connectivity_unavailable.xml" value="0.1537037037037037" />
+        <entry key="..\:/Office/AndroidProject/JetpackComposeDummyProject/app/src/main/res/drawable/ic_height.xml" value="0.1537037037037037" />
         <entry key="..\:/Office/AndroidProject/JetpackComposeDummyProject/app/src/main/res/drawable/ic_weight.xml" value="0.14635416666666667" />
       </map>
     </option>

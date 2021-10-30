@@ -1,17 +1,21 @@
 package com.spider.jetpackcomposedummyproject.ui.screens
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyGridScope
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -29,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.compose.LazyPagingItems
 import coil.ImageLoader
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
@@ -36,12 +42,14 @@ import coil.request.SuccessResult
 import com.spider.jetpackcomposedummyproject.R
 import com.spider.jetpackcomposedummyproject.helper.ErrorTypes
 import com.spider.jetpackcomposedummyproject.model.Pokemon
+import com.spider.jetpackcomposedummyproject.ui.components.ConnectivityStatus
 import com.spider.jetpackcomposedummyproject.ui.theme.RobotoCondensed
-import com.spider.jetpackcomposedummyproject.util.ConnectionState
-import com.spider.jetpackcomposedummyproject.util.currentConnectivityState
 import com.spider.jetpackcomposedummyproject.viewmodel.PokemonViewModel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
+@ExperimentalAnimationApi
+@ExperimentalPagingApi
 @ExperimentalFoundationApi
 @Composable
 fun PokemonListScreen(
@@ -54,6 +62,7 @@ fun PokemonListScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         Column {
+            ConnectivityStatus()
             Spacer(modifier = Modifier.height(20.dp))
             Image(
                 painter = painterResource(id = R.drawable.ic_international_pok_mon_logo),
@@ -68,11 +77,10 @@ fun PokemonListScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                viewModel.searchPokemonList(it)
+               viewModel.searchPokemonList(it)
             }
             Spacer(modifier = Modifier.height(16.dp))
             PokemonList(navController = navController)
-            // TODO - Add Network check observer, show network status UI
         }
     }
 }
@@ -123,23 +131,29 @@ fun SearchBar(
     }
 }
 
+@ExperimentalPagingApi
 @ExperimentalFoundationApi
 @Composable
 fun PokemonList(
     navController: NavController,
     viewModel: PokemonViewModel = hiltViewModel()
 ) {
-    val pokemonList by remember { viewModel.pokemonList }
+    val pokemonList = if(!viewModel.isSearching.value) {
+        viewModel.pokemonList.observeAsState(listOf()).value
+    }
+    else{
+        viewModel.searchPokemonList.value
+    }
+
+    Timber.d("PokemonList $pokemonList")
     val endReached by remember { viewModel.endReached }
     val loadError by remember { viewModel.loadError }
     val isLoading by remember { viewModel.isLoading }
     val isSearching by remember { viewModel.isSearching }
 
-
     // using grid view
     LazyVerticalGrid(
-        cells =
-        GridCells.Fixed(2),
+        cells = GridCells.Fixed(2),
         contentPadding = PaddingValues(16.dp)
     ) {
         items(pokemonList.size) {
@@ -149,7 +163,6 @@ fun PokemonList(
             PokemonCard(entry = pokemonList[it], navController = navController)
         }
     }
-
 
     Box(
         contentAlignment = Center,
@@ -161,8 +174,8 @@ fun PokemonList(
         }
 
         // showing retry option when error occur
-        loadError.message?.let { message->
-            when(loadError.type){
+        loadError.message?.let { message ->
+            when (loadError.type) {
                 ErrorTypes.NETWORK_ERROR -> {
                     RetrySection(error = LocalContext.current.getString(R.string.no_internet_message)) {
                         viewModel.loadPokemonPaginated()
@@ -270,5 +283,15 @@ fun RetrySection(
         ) {
             Text(text = "Retry")
         }
+    }
+}
+
+@ExperimentalFoundationApi
+public fun <T : Any> LazyGridScope.items(
+    lazyPagingItems: LazyPagingItems<T>,
+    itemContent: @Composable LazyItemScope.(value: T?) -> Unit
+) {
+    items(lazyPagingItems.itemCount) { index ->
+        itemContent(lazyPagingItems[index])
     }
 }
